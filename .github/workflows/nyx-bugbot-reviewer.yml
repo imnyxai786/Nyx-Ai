@@ -1,0 +1,169 @@
+# ── Nyx AI BugBot Reviewer ───────────────────────────────────────────────────
+# Automated code review workflow that analyzes PRs for bugs, security issues,
+# and code quality problems. Posts inline review comments with suggestions.
+
+name: Nyx BugBot Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: bugbot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  bugbot-review:
+    name: 🔍 BugBot Code Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          separator: "\n"
+          files: |
+            **/*.{ts,tsx,js,jsx,py,rs,go,java,rb,php,css,scss,html,json,yaml,yml,md}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run TypeScript type check
+        id: typecheck
+        continue-on-error: true
+        run: |
+          npx tsc --noEmit --pretty 2>&1 | tee /tmp/typecheck-output.txt
+
+      - name: Run ESLint
+        id: eslint
+        continue-on-error: true
+        run: |
+          npx eslint --format json --output-file /tmp/eslint-output.json ${{ steps.changed-files.outputs.all_changed_files }} 2>/dev/null || true
+
+      - name: Analyze and post review
+        uses: actions/github-script@v7
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          TYPECHECK_OUTPUT: ${{ steps.typecheck.outputs.stdout }}
+        with:
+          script: |
+            const fs = require('fs');
+            const changedFiles = process.env.CHANGED_FILES.split('\n').filter(Boolean);
+
+            // ── Parse TypeScript errors ──────────────────────────────
+            const typecheckOutput = fs.existsSync('/tmp/typecheck-output.txt')
+              ? fs.readFileSync('/tmp/typecheck-output.txt', 'utf8')
+              : '';
+
+            const tsErrors = [];
+            const tsRegex = /^(.+?)\((\d+),(\d+)\):\s+(error|warning)\s+(TS\d+):\s+(.+)$/gm;
+            let match;
+            while ((match = tsRegex.exec(typecheckOutput)) !== null) {
+              tsErrors.push({
+                file: match[1],
+                line: parseInt(match[2]),
+                severity: match[4],
+                code: match[5],
+                message: match[6],
+              });
+            }
+
+            // ── Parse ESLint errors ─────────────────────────────────
+            const eslintResults = [];
+            if (fs.existsSync('/tmp/eslint-output.json')) {
+              try {
+                const eslintRaw = JSON.parse(fs.readFileSync('/tmp/eslint-output.json', 'utf8'));
+                for (const fileResult of eslintRaw) {
+                  for (const msg of fileResult.messages || []) {
+                    eslintResults.push({
+                      file: fileResult.filePath.replace(process.env.GITHUB_WORKSPACE + '/', ''),
+                      line: msg.line || 1,
+                      severity: msg.severity === 2 ? 'error' : 'warning',
+                      code: msg.ruleId || 'unknown',
+                      message: msg.message,
+                    });
+                  }
+                }
+              } catch (e) {
+                console.log('ESLint output parse error:', e.message);
+              }
+            }
+
+            // ── Build review comments ───────────────────────────────
+            const comments = [];
+
+            for (const err of tsErrors) {
+              const relativePath = err.file.replace(process.env.GITHUB_WORKSPACE + '/', '');
+              if (changedFiles.includes(relativePath)) {
+                comments.push({
+                  path: relativePath,
+                  line: err.line,
+                  side: 'RIGHT',
+                  body: `🐛 **BugBot — TypeScript ${err.severity}**\n\n\`${err.code}\`: ${err.message}\n\n_Suggested fix: Review the type definitions and ensure all imports are available._`,
+                });
+              }
+            }
+
+            for (const err of eslintResults) {
+              if (changedFiles.includes(err.file)) {
+                comments.push({
+                  path: err.file,
+                  line: err.line,
+                  side: 'RIGHT',
+                  body: `🔍 **BugBot — ESLint ${err.severity}**\n\n\`${err.code}\`: ${err.message}\n\n_Suggested fix: Address the linting issue to improve code quality._`,
+                });
+              }
+            }
+
+            // ── Post review ─────────────────────────────────────────
+            if (comments.length > 0) {
+              // Limit to 50 comments per review to avoid API limits
+              const limitedComments = comments.slice(0, 50);
+
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                event: 'COMMENT',
+                body: `## 🤖 Nyx BugBot Review\n\nAnalyzed **${changedFiles.length}** changed files.\n\nFound **${comments.length}** issue${comments.length !== 1 ? 's' : ''}${comments.length > 50 ? ' (showing first 50)' : ''}:\n\n| Type | Count |\n|------|-------|\n| TypeScript Errors | ${tsErrors.length} |\n| ESLint Issues | ${eslintResults.length} |\n\n_Review powered by [Nyx AI](https://github.com/nyx-ai)_`,
+                comments: limitedComments,
+              });
+            } else {
+              // Post a success comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: `## ✅ Nyx BugBot Review\n\nAnalyzed **${changedFiles.length}** changed files — no issues found!\n\n_Great job! 🎉_\n\n_Review powered by [Nyx AI](https://github.com/nyx-ai)_`,
+              });
+            }
+
+      - name: Review summary
+        if: always()
+        run: |
+          echo "## 🔍 BugBot Review Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Analyzed files: ${{ steps.changed-files.outputs.all_changed_files_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "TypeScript check: ${{ steps.typecheck.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "ESLint check: ${{ steps.eslint.outcome }}" >> $GITHUB_STEP_SUMMARY
