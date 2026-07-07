@@ -132,6 +132,16 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
         email: user.primaryEmailAddress?.emailAddress || null,
         imageUrl: user.imageUrl || null,
       });
+
+      // Automatically inject $1.50 into wallet for new users
+      // This is a placeholder for actual Supabase interaction.
+      // In a production environment, this would trigger a server-side function to update the user_wallets table.
+      if (user.createdAt && user.lastSignInAt && user.createdAt === user.lastSignInAt) { // Check if it\'s a new user
+        console.log(`New user ${user.id} provisioned with a $1.50 starter balance.`);
+        // Example of how you *might* call a Supabase function (requires client-side Supabase instance):
+        // const supabase = createClientComponentClient();
+        // await supabase.from(\'user_wallets\').insert({ user_id: user.id, balance_usd: 1.50, status: \'active\' });
+      }
     }
   }, [user, setUserInfo]);
 

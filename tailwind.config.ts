@@ -9,6 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        onyx: "#121212",
+        "deep-onyx": "#1A1A1A",
+        gold: "#D4AF37",
+        amber: "#FFBF00",
+        "dark-gray": "#2a2a2a",
+        "onyx-light": "#202020",
         // Cursor AI Dark Mode Palette
         vsc: {
           bg: "#1e1e1e",           // Primary workspace background
