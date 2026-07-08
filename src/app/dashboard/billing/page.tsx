@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 interface Transaction {
@@ -12,7 +12,16 @@ interface Transaction {
 }
 
 const BillingDashboardPage: React.FC = async () => {
-  const supabase = createServerComponentClient({ cookies });
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name: string) => cookieStore.get(name)?.value,
+      },
+    }
+  );
 
   // In a real application, you would fetch the user's wallet balance and transactions from Supabase.
   // For this exercise, we'll use mock data.
