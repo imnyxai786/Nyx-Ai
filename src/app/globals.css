@@ -3,15 +3,39 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   * {
-    @apply border-vsc-border;
+    @apply border-editor-border;
   }
 
   body {
-    @apply bg-vsc-bg text-vsc-text font-sans antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-editor-surface text-editor-text font-sans antialiased;
+  }
+
+  /* Shiki styles for syntax highlighting */
+  pre {
+    @apply bg-editor-surface-2 p-4 rounded-md overflow-x-auto;
+  }
+
+  code {
+    @apply font-mono text-sm;
+  }
+
+  .shiki code {
+    counter-reset: line;
+  }
+
+  .shiki .line {
+    counter-increment: line;
+    @apply min-h-[1.25rem]; /* ensure empty lines have height */
+  }
+
+  .shiki .line::before {
+    content: counter(line);
+    @apply inline-block text-editor-text-dim text-right pr-4 select-none;
+    width: 3ch; /* Adjust as needed for line number width */
   }
 
   ::-webkit-scrollbar {
@@ -24,41 +48,41 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-vsc-scrollbar rounded-[3px];
+    @apply bg-editor-text-subtle rounded-[3px];
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-vsc-scrollbar-hover;
+    @apply bg-editor-text-dim;
   }
 
   ::selection {
-    @apply bg-vsc-selection;
+    @apply bg-editor-accent-blue;
   }
 }
 
 @layer components {
   .vsc-card {
-    @apply bg-vsc-sidebar border border-vsc-border rounded;
+    @apply bg-editor-surface-2 border border-editor-border rounded;
   }
 
   .vsc-input {
-    @apply bg-vsc-input border border-vsc-border rounded px-3 py-1.5
-           text-vsc-text text-sm
-           focus:outline-none focus:border-vsc-border-focus
+    @apply bg-editor-surface-2 border border-editor-border rounded px-3 py-1.5
+           text-editor-text text-sm
+           focus:outline-none focus:border-editor-accent-blue
            transition-colors duration-150;
   }
 
   .vsc-btn-primary {
-    @apply bg-vsc-accent hover:bg-vsc-accent-hover text-white text-sm font-medium
+    @apply bg-editor-accent-blue hover:bg-blue-600 text-white text-sm font-medium
            px-3 py-1.5 rounded transition-colors duration-150;
   }
 
   .vsc-btn-ghost {
-    @apply text-vsc-text-dim hover:text-vsc-text hover:bg-vsc-list-hover
+    @apply text-editor-text-dim hover:text-editor-text hover:bg-editor-surface-2
            px-2 py-1 rounded text-sm transition-colors duration-150;
   }
 
   .vsc-divider {
-    @apply border-t border-vsc-border;
+    @apply border-t border-editor-border;
   }
 }

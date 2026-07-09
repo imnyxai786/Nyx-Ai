@@ -9,73 +9,56 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        onyx: "#121212",
-        "deep-onyx": "#1A1A1A",
-        gold: "#D4AF37",
-        amber: "#FFBF00",
-        "dark-gray": "#2a2a2a",
-        "onyx-light": "#202020",
         // Cursor AI Dark Mode Palette
+        "editor-surface": "#09090b", // Deep charcoal for background
+        "editor-surface-2": "#18181b", // Slightly lighter charcoal for secondary surfaces
+        "editor-border": "#27272a", // Soft subtle border color
+        "editor-accent-blue": "#007acc", // Muted blue accent
+        "editor-accent-purple": "#896AD8", // Subtle purple accent
+        "editor-text": "#e0e0e0", // Clean white for UI text
+        "editor-text-dim": "#a1a1aa", // Dimmed text for secondary information
+        "editor-text-subtle": "#71717a", // Very subtle text
+
         vsc: {
-          bg: "#1e1e1e",           // Primary workspace background
-          sidebar: "#181818",      // Left sidebar, file tree, right chat pane
-          activitybar: "#181818",  // Activity bar (same as sidebar)
-          titlebar: "#181818",     // Flat header bars (Cursor style)
-          panel: "#1e1e1e",       // Bottom panel
-          input: "#2a2a2a",       // Input / active tab background
-          border: "#2b2b2b",      // Crisp 1px panel borders
-          "border-focus": "#007acc", // Focus border
-          text: "#d4d4d4",        // Off-white developer font color
-          "text-bright": "#e0e0e0", // Brighter text
-          "text-dim": "#858585",  // Dimmed / muted text
-          "text-subtle": "#6a6a6a", // Very subtle text
-          accent: "#007acc",      // Blue accent
-          "accent-hover": "#1a8ad4", // Lighter blue on hover
-          "accent-dim": "#264f78", // Dimmed accent for selections
-          "list-hover": "#2a2a2a", // List item hover / active tab bg
-          "list-active": "#2a2a2a", // Active list item
-          "selection": "#264f78", // Text selection
-          "scrollbar": "#424242", // Scrollbar thumb
-          "scrollbar-hover": "#4f4f4f", // Scrollbar hover
-          "chat-user": "#202020",  // User chat bubble / composer card bg
-          // Syntax token colors (Cursor Dark)
-          "token-keyword": "#569cd6",    // Blue - keywords
-          "token-string": "#ce9178",     // Orange - strings
-          "token-number": "#b5cea8",     // Green - numbers
-          "token-type": "#4ec9b0",       // Teal - types
-          "token-function": "#dcdcaa",   // Yellow - functions
-          "token-comment": "#6a9955",    // Green - comments
-          "token-variable": "#9cdcfe",   // Light blue - variables
-          "token-operator": "#d4d4d4",   // White - operators
-          "token-tag": "#569cd6",        // Blue - HTML tags
-          "token-attr": "#9cdcfe",       // Light blue - attributes
-          // Status colors
+          bg: "#1e1e1e",
+          sidebar: "#181818",
+          activitybar: "#181818",
+          titlebar: "#181818",
+          panel: "#1e1e1e",
+          input: "#2a2a2a",
+          border: "#2b2b2b",
+          "border-focus": "#007acc",
+          text: "#d4d4d4",
+          "text-bright": "#e0e0e0",
+          "text-dim": "#858585",
+          "text-subtle": "#6a6a6a",
+          accent: "#007acc",
+          "accent-hover": "#1a8ad4",
+          "accent-dim": "#264f78",
+          "list-hover": "#2a2a2a",
+          "list-active": "#2a2a2a",
+          "selection": "#264f78",
+          "scrollbar": "#424242",
+          "scrollbar-hover": "#4f4f4f",
+          "chat-user": "#202020",
+          "token-keyword": "#569cd6",
+          "token-string": "#ce9178",
+          "token-number": "#b5cea8",
+          "token-type": "#4ec9b0",
+          "token-function": "#dcdcaa",
+          "token-comment": "#6a9955",
+          "token-variable": "#9cdcfe",
+          "token-operator": "#d4d4d4",
+          "token-tag": "#569cd6",
+          "token-attr": "#9cdcfe",
           success: "#4ec9b0",
           warning: "#dcdcaa",
           error: "#f44747",
         },
       },
       fontFamily: {
-        sans: [
-          "Inter",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "'Segoe UI'",
-          "Roboto",
-          "Oxygen",
-          "Ubuntu",
-          "Cantarell",
-          "sans-serif",
-        ],
-        mono: [
-          "'SF Mono'",
-          "Menlo",
-          "Monaco",
-          "Consolas",
-          "'Courier New'",
-          "monospace",
-        ],
+        sans: ["Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       letterSpacing: {
         tight: "-0.01em",
