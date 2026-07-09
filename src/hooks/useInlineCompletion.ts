@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import type * as Monaco from "monaco-editor";
+import { useUserProfile } from "@/store/userProfile";
 
 interface UseInlineCompletionOptions {
   editor: Monaco.editor.IStandaloneCodeEditor | null;
@@ -18,6 +19,7 @@ export function useInlineCompletion({
 }: UseInlineCompletionOptions) {
   const providerRef = useRef<Monaco.IDisposable | null>(null);
   const fetchingRef = useRef(false);
+  const { byokKey } = useUserProfile();
 
   const fetchCompletion = useCallback(
     async (
@@ -38,6 +40,7 @@ export function useInlineCompletion({
             cursorColumn,
             language: lang,
             fileName: fname,
+            byokKey,
           }),
         });
 

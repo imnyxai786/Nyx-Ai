@@ -6,6 +6,7 @@ import React, {
   useState,
   useCallback,
   useRef,
+  useEffect,
 } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ interface TerminalActions {
 
 type TerminalContext = TerminalState & TerminalActions;
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────
 
 let _entryId = 0;
 function genEntryId() {
@@ -69,22 +70,86 @@ function genProblemId() {
   return `prob_${Date.now()}_${++_problemId}`;
 }
 
-// ── Context ────────────────────────────────────────────────────────────────
+// ── Local Storage Helpers (per-user) ───────────────────────────────────────
+
+function terminalStorageKey(userId: string) {
+  return `nyx-ai:terminal:${userId}`;
+}
+
+function loadTerminalFromStorage(userId: string): TerminalState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(terminalStorageKey(userId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.entries && Array.isArray(parsed.entries) &&
+          parsed.problems && Array.isArray(parsed.problems) &&
+          typeof parsed.isRunning === 'boolean' &&
+          typeof parsed.activeTab === 'string' &&
+          typeof parsed.isInitialized === 'boolean') {
+        return parsed as TerminalState;
+      }
+    }
+  } catch {
+    // ignore corrupt data
+  }
+  return null;
+}
+
+function saveTerminalToStorage(userId: string, state: TerminalState) {
+  if (typeof window === "undefined" || userId === "anonymous") return;
+  try {
+    localStorage.setItem(terminalStorageKey(userId), JSON.stringify(state));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+// ── Context ───────────────────────────────────────────────────────────────
 
 const TerminalCtx = createContext<TerminalContext | null>(null);
 
 // ── Provider ──────────────────────────────────────────────────────────────
 
-export function TerminalProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<TerminalState>({
-    entries: [],
-    problems: [],
-    isRunning: false,
-    activeTab: "terminal",
-    isInitialized: false,
+export function TerminalProvider({
+  userId,
+  children,
+}: {
+  userId: string | null;
+  children: React.ReactNode;
+}) {
+  const [state, setState] = useState<TerminalState>(() => {
+    if (userId && userId !== "anonymous") {
+      const saved = loadTerminalFromStorage(userId);
+      if (saved) return saved;
+    }
+    return {
+      entries: [],
+      problems: [],
+      isRunning: false,
+      activeTab: "terminal",
+      isInitialized: false,
+    };
   });
 
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // When userId changes, load the correct terminal state
+  useEffect(() => {
+    if (userId && userId !== "anonymous") {
+      const saved = loadTerminalFromStorage(userId);
+      if (saved) {
+        setState(saved);
+      }
+    }
+  }, [userId]);
+
+  // Persist terminal state on every change
+  useEffect(() => {
+    if (userId && userId !== "anonymous") {
+      saveTerminalToStorage(userId, state);
+    }
+  }, [userId, state]);
 
   const addLog = useCallback(
     (message: string, level: LogLevel = "info", source?: string) => {

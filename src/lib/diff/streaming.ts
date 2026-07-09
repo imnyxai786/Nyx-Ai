@@ -9,6 +9,32 @@ import { parseUnifiedDiff, applyDiff, isDiffStart, hasCompleteHunk } from "./par
 
 export type StreamingState = "idle" | "streaming" | "applying" | "complete" | "error";
 
+// ── Patch Failure Notification System ───────────────────────────────────────
+// When a diff patch fails to apply, this emits an event that the ChatPane
+// can subscribe to, showing a "Retry/Rollback" notification to the user.
+
+export interface PatchFailureEvent {
+  id: string;
+  filePath: string | null;
+  error: string;
+  originalContent: string;
+  timestamp: Date;
+}
+
+type PatchFailureListener = (event: PatchFailureEvent) => void;
+const patchFailureListeners = new Set<PatchFailureListener>();
+
+export function emitPatchFailure(event: PatchFailureEvent) {
+  for (const listener of patchFailureListeners) {
+    listener(event);
+  }
+}
+
+export function onPatchFailure(listener: PatchFailureListener): () => void {
+  patchFailureListeners.add(listener);
+  return () => patchFailureListeners.delete(listener);
+}
+
 export interface StreamingDiffConfig {
   /** Minimum time between diff applications (ms), prevents UI thrashing */
   applyThrottleMs?: number;

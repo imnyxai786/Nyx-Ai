@@ -1,5 +1,5 @@
-// ── Diff Module ──────────────────────────────────────────────────────────────
-// Unified Diff Streaming Handler — incremental code additions for Monaco editor
+// ── Diff Module ─────────────────────────────────────────────────────────────
+// Unified diff parsing, streaming application, and Monaco integration
 
 export type {
   DiffHunkHeader,
@@ -20,9 +20,12 @@ export type {
   StreamingState,
   StreamingDiffConfig,
   StreamingDiffSnapshot,
+  PatchFailureEvent,
 } from "./streaming";
 
 export {
   StreamingDiffHandler,
   createMonacoStreamingHandler,
+  emitPatchFailure,
+  onPatchFailure,
 } from "./streaming";

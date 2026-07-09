@@ -13,7 +13,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useUserProfile } from "@/store/userProfile";
-import PricingModal from "./PricingModal";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -30,7 +29,6 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const [keyInput, setKeyInput] = useState(byokKey || "");
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [pricingOpen, setPricingOpen] = useState(false);
 
   if (!open) return null;
 
@@ -111,14 +109,6 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                           : `${requestLimit - requestCount} / ${requestLimit} requests remaining`}
                       </p>
                     </div>
-                    {!isPremium && (
-                      <button
-                        onClick={() => setPricingOpen(true)}
-                        className="px-2.5 py-1 rounded-sm bg-vsc-accent text-white text-[10px] font-medium hover:bg-vsc-accent-hover transition-colors"
-                      >
-                        Upgrade
-                      </button>
-                    )}
                   </>
                 )}
               </div>
@@ -206,12 +196,6 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
           </div>
         </div>
       </div>
-
-      {/* Pricing Modal */}
-      <PricingModal
-        open={pricingOpen}
-        onClose={() => setPricingOpen(false)}
-      />
     </>
   );
 }

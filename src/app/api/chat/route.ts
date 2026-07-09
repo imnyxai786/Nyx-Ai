@@ -67,9 +67,10 @@ interface ChatMessage {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { messages, model } = body as {
+    const { messages, model, byokKey } = body as {
       messages: ChatMessage[];
       model?: string;
+      byokKey?: string;
     };
 
     if (!messages || !Array.isArray(messages)) {
@@ -79,13 +80,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    // BYOK-First Security: Prioritize user's byokKey over environment variable
+    const apiKey = byokKey || process.env.OPENAI_API_KEY;
     const baseUrl = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
     const selectedModel = model || process.env.OPENAI_MODEL || "gpt-4";
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "OpenAI API key not configured. Set OPENAI_API_KEY in .env.local" },
+        { error: "No API key found. Please configure your API key in Settings." },
         { status: 500 }
       );
     }

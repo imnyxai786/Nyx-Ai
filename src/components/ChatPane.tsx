@@ -23,6 +23,7 @@ import { useWorkspace, detectLanguage } from "@/store/workspace";
 import { useTerminal } from "@/store/terminal";
 import { useRequestGuard } from "@/hooks/useRequestGuard";
 import { useUserProfile } from "@/store/userProfile";
+import { onBugHunterProposal, type BugHunterProposal } from "@/hooks/useBugHunter";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -249,6 +250,22 @@ export default function ChatPane() {
   const { guardRequest, hasUnlimitedAccess, remainingRequests } = useRequestGuard();
   const { byokKey } = useUserProfile();
 
+  // ── BugHunter: Subscribe to terminal error proposals ──
+  useEffect(() => {
+    const unsubscribe = onBugHunterProposal((proposal) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: proposal.id,
+          role: "assistant",
+          content: proposal.prompt,
+          timestamp: proposal.timestamp,
+        },
+      ]);
+    });
+    return unsubscribe;
+  }, []);
+
   // ── @ Mention State ──
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
@@ -444,7 +461,7 @@ export default function ChatPane() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, byokKey }),
         signal: abortControllerRef.current.signal,
       });
 

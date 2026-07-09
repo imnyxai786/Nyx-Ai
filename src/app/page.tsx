@@ -16,7 +16,6 @@ const HomePage: React.FC = () => {
           <span className="font-mono font-semibold text-white text-sm">Nyx AI</span>
         </div>
         <nav className="flex items-center space-x-6 text-sm">
-          <Link href="/pricing" className="text-editor-text-dim hover:text-white transition-colors">Pricing</Link>
           <Link href="/dashboard" className="px-3 py-1 bg-editor-surface-2 border border-editor-border text-white rounded text-xs hover:border-editor-text-subtle transition-colors">
             Launch Editor
           </Link>

@@ -6,12 +6,13 @@ import Sidebar from "./Sidebar";
 import ChatPane from "./ChatPane";
 import PreviewSimulator from "./PreviewSimulator";
 import TerminalLogs from "./TerminalLogs";
-import PricingModal from "./PricingModal";
 import SettingsPanel from "./SettingsPanel";
 import { WorkspaceProvider } from "@/store/workspace";
 import { TerminalProvider, useTerminal } from "@/store/terminal";
 import { useUserProfile } from "@/store/userProfile";
 import { useRequestGuard } from "@/hooks/useRequestGuard";
+import { useMCP } from "@/hooks/useMCP";
+import { useBugHunter } from "@/hooks/useBugHunter";
 import {
   PanelRightOpen,
   PanelRightClose,
@@ -21,8 +22,6 @@ import {
   LayoutDashboard,
   Zap,
   Settings,
-  AlertTriangle,
-  X,
 } from "lucide-react";
 
 // ── Inner layout that uses terminal + auth context ─────────────────────────
@@ -31,15 +30,18 @@ function MainLayoutInner() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [drawerSplit, setDrawerSplit] = useState(55); // % for preview
-  const [pricingOpen, setPricingOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isDragging = useRef(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const { initializeTerminal } = useTerminal();
-  const { user } = useUser();
-  const { isPremium, byokKey, requestCount, requestLimit } = useUserProfile();
-  const { upgradePromptVisible, dismissUpgradePrompt, remainingRequests, hasUnlimitedAccess } =
-    useRequestGuard();
+  const { isPremium, byokKey, requestLimit } = useUserProfile();
+  const { remainingRequests } = useRequestGuard();
+
+  // Initialize MCP filesystem server on session start
+  useMCP();
+
+  // Activate BugHunter — watches terminal for errors and generates fix proposals
+  useBugHunter();
 
   // Initialize terminal boot sequence on mount
   useEffect(() => {
@@ -115,15 +117,6 @@ function MainLayoutInner() {
             >
               <Settings className="w-3.5 h-3.5" />
             </button>
-            {!isPremium && (
-              <button
-                onClick={() => setPricingOpen(true)}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-sm bg-vsc-accent/10 border border-vsc-accent/20 text-vsc-accent text-[10px] font-medium hover:bg-vsc-accent/20 transition-colors"
-              >
-                <Zap className="w-3 h-3" />
-                Upgrade
-              </button>
-            )}
             <UserButton
               appearance={{
                 elements: {
@@ -138,44 +131,6 @@ function MainLayoutInner() {
         <div className="flex-1 min-h-0">
           <ChatPane />
         </div>
-
-        {/* Upgrade prompt banner (when limit reached) */}
-        {upgradePromptVisible && (
-          <div className="flex items-center justify-between px-3 py-2 bg-amber-500/10 border-t border-amber-500/30 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-              <span className="text-[11px] text-amber-300">
-                You've used all {requestLimit} free requests. Upgrade for unlimited access or add your own API key.
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  dismissUpgradePrompt();
-                  setPricingOpen(true);
-                }}
-                className="px-2 py-1 rounded-sm bg-vsc-accent text-white text-[10px] font-medium hover:bg-vsc-accent-hover transition-colors"
-              >
-                Upgrade
-              </button>
-              <button
-                onClick={() => {
-                  dismissUpgradePrompt();
-                  setSettingsOpen(true);
-                }}
-                className="px-2 py-1 rounded-sm bg-vsc-input border border-vsc-border text-vsc-text text-[10px] font-medium hover:bg-vsc-list-hover transition-colors"
-              >
-                Add Key
-              </button>
-              <button
-                onClick={dismissUpgradePrompt}
-                className="p-0.5 text-amber-400/60 hover:text-amber-400 transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Right Drawer — Collapsible Preview/Terminal Panel */}
@@ -260,10 +215,6 @@ function MainLayoutInner() {
       )}
 
       {/* Modals */}
-      <PricingModal
-        open={pricingOpen}
-        onClose={() => setPricingOpen(false)}
-      />
       <SettingsPanel
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -280,7 +231,7 @@ export default function MainLayout() {
 
   return (
     <WorkspaceProvider userId={userId}>
-      <TerminalProvider>
+      <TerminalProvider userId={userId}>
         <MainLayoutInner />
       </TerminalProvider>
     </WorkspaceProvider>

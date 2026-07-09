@@ -14,12 +14,13 @@ interface CompleteRequest {
   cursorColumn: number;
   language: string;
   fileName?: string;
+  byokKey?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { content, cursorLine, cursorColumn, language, fileName } =
+    const { content, cursorLine, cursorColumn, language, fileName, byokKey } =
       body as CompleteRequest;
 
     if (typeof content !== "string" || !cursorLine || !cursorColumn) {
@@ -29,7 +30,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    // BYOK-First Security: Prioritize user's byokKey over environment variable
+    const apiKey = byokKey || process.env.OPENAI_API_KEY;
     const baseUrl = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
     const completeModel =
       process.env.NYX_COMPLETE_MODEL ||
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "OpenAI API key not configured" },
+        { error: "No API key found. Please configure your API key in Settings." },
         { status: 500 }
       );
     }
